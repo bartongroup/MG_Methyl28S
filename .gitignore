@@ -2,7 +2,7 @@
 .Rhistory
 .RData
 .Ruserdata
-_targets
+_targets/
 doc/*
 !doc/_targets.yaml
 !doc/images
@@ -10,4 +10,4 @@ doc/*
 pilot/*
 !pilot/config
 !pilot/Snakefile
-!pilot/multiqc
+renv/
