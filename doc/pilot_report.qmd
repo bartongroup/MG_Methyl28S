@@ -3,6 +3,7 @@ title: "28S methylation: pilot experiment"
 author:
    - name: Marek Gierlinski
      affiliations: Data Analysis Group
+     note: "Creator of this report"
    - name: Leeanne McGurk
      affiliations: Medical Sciences Institute
      note: "Collaborator"
@@ -111,7 +112,7 @@ tar_read(fig_seq_28S)
 #| label: fig-28S-methylation
 #| fig-cap: Methylation sites in 28S. The colous show counts of reads with and without methylation.
 #| fig-width: 10
-#| fig-height: 10
+#| fig-height: 20
 tar_read(fig_cov_28S)
 ```
 
@@ -132,6 +133,16 @@ tar_read(biscov) |>
 
 Locus 3402 is highly methylated in all conditions.
 
+
+# Resources
+
+ - [Source code for this project](https://github.com/bartongroup/MG_Methyl28S)
+
+## Session info
+
+```{r session_info}
+tar_read(session_info)
+```
 
 :::
 

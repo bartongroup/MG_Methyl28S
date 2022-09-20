@@ -27,12 +27,11 @@ targets_main <- function() {
     tar_target(biscov, read_coverage("pilot/28S/bismark", metadata))
   )
 
-
   report <- list(
     tar_target(tab_bamstats, tabulate_bamstats(bamstats)),
     tar_target(fig_read_qual, plot_qualities(qcs)),
     tar_target(fig_peaks, plot_blocks(bgb, "CTR_1", ncol = 2)),
-    tar_target(fig_cov_28S, plot_coverage(biscov)),
+    tar_target(fig_cov_28S, plot_coverage(biscov, ncol = 1)),
     tar_target(fig_seq_28S, plot_28S(bg_28S, dna_28S, from = 3252, to = 3472, smpl = "CTR_1"))
   )
 
