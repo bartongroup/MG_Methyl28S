@@ -1,0 +1,16 @@
+ensembl_dir: ftp://ftp.ensembl.org/pub/release-
+
+fastq_screen_config: fastq_screen.conf
+
+
+reference:
+    release: "107"
+    genome_path: drosophila_melanogaster
+    genome_name: Drosophila_melanogaster.BDGP6.32
+    genome_suffix: .dna.toplevel.fa
+
+reference_28S:
+    genome_name: 28S
+
+samples: config/samples.txt
+ 

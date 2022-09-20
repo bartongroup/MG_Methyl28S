@@ -1,0 +1,12 @@
+fscreen/*.txt
+qc/*.zip
+multiqc/*.html
+genome/28S.fa
+28S/bam/*
+28S/bismark/*cov.gz
+28S/bedgraph/*.bedgraph
+merged/bam/*stats
+merged/bismark/*cov.gz
+merged/bedgraph/*.bedgraph
+config/*
+Snakefile

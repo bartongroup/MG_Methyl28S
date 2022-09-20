@@ -1,0 +1,13 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+_targets
+doc/*
+!doc/_targets.yaml
+!doc/images
+!doc/pilot_report.qmd
+pilot/*
+!pilot/config
+!pilot/Snakefile
+!pilot/multiqc

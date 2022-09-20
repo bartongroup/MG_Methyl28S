@@ -1,0 +1,137 @@
+---
+title: "28S methylation: pilot experiment"
+author:
+   - name: Marek Gierlinski
+     affiliations: Data Analysis Group
+   - name: Leeanne McGurk
+     affiliations: Medical Sciences Institute
+     note: "Collaborator"
+date: today
+date-format: "D MMMM YYYY"
+theme: journal
+execute: 
+  echo: false
+  cache: true
+format:
+  html:
+    toc: true
+editor: visual
+---
+
+```{r setup, include=FALSE}
+library(targets)
+library(gt)
+library(tidyverse)
+```
+
+
+::: {.panel-tabset}
+
+# Proposal
+
+## Samples
+
+ - DL126: normal control repeat 1
+ - DL129: normal control repeat 2
+
+ - DL127: disease repeat 1
+ - DL130: disease repeat 2
+
+ - DL128: disease suppressor repeat 1
+ - DL131: disease suppressor repeat 1
+
+## Expectation 
+
+The methylated C in the 28S rRNA (indicated in the sequence file) will be methylated in control conditions (50-80% ?), it will be increased in disease conditions, and should be decreased in disease suppressor conditions. If the cytosine is methylated similarly in all conditions, or methylation is reduced in the disease conditions it will suggest that the increase in cytosine methylation (detected by RNA dot blot) that we observe in the disease condition is elsewhere in the transcriptome.
+
+## Sequence
+
+Sequence used is Chain 5, 28S ribosomal RNA from Drosophila melanogaster, PDB: 3J3E_5. [NIH information](https://www.ncbi.nlm.nih.gov/nucleotide/3J3E_5). Sequence in bold and underlined are the PCR primers. The C highlighted in yellow is the methylated cytosine. 
+
+![Section of 28S sequence with the methylated C](images/methylated_c.png)
+
+
+# Experiment
+
+```{r meta}
+#| label: tbl-metadata
+#| tbl-cap: Experimental design
+tar_read(metadata) |> 
+  select(sample, name = raw_sample, treatment, replicate) |> 
+  gt()
+```
+
+# Full genome
+
+Reads were mapped to the *Drosophila melanogaster* genome BDGP6.32 (release 107), downloaded from Ensembl. The provided 28S sequence was added as a separate 'chromosome' (here labelled as `pdb|3J3E|5`). All `C` nucleotides were converted to `T` before mapping, to account for bisulphite convertion in data. *Bowtie2* 2.4.5 was used for mapping with default parameters.
+
+## Mapping statistics
+
+@tbl-mapping contains mapping statistics.
+
+```{r mapping}
+#| label: tbl-mapping
+#| tbl-cap: Statistics of mapping reads to the full genome.
+tar_read(tab_bamstats) |> 
+  gt()
+```
+
+## Mapped regions found
+
+A few regions with at least reads at any position were found. They are shown in @fig-regions for sample `CTR_1`.
+
+```{r fig_regions}
+#| label: fig-regions
+#| fig-cap: Regions with mapped reads in the full genome.
+#| fig-width: 10
+#| fig-height: 12
+tar_read(fig_peaks)
+```
+
+All these regions contain the same sequence.
+
+# 28S
+
+Here, reads where mapped to 28S sequence `pdb|3J3E|5`. Mapping of sample `CTR_1` is shown in @fig-28S-mapping. 
+
+```{r map_28S}
+#| label: fig-28S-mapping
+#| fig-cap: Coverage of 28S. The sequence of the region between the primers is shown. Depth drops sharply outside primer regions.
+#| fig-column: page-right
+#| fig-width: 15
+tar_read(fig_seq_28S) 
+```
+
+## Methylation
+
+*Bismark* 0.23.1 was used to detect methylation sites. There are several sites in CpG context in 28S, though non of them is methylated except the site of interest, 3402, which is highly methylated in all samples. @fig-28S-methylation illustrates methylation for all sites detecte, @tbl-3402-methylation shows methylation statistics for locus 3402.
+
+
+```{r fig_methyl}
+#| label: fig-28S-methylation
+#| fig-cap: Methylation sites in 28S. The colous show counts of reads with and without methylation.
+#| fig-width: 10
+#| fig-height: 10
+tar_read(fig_cov_28S)
+```
+
+
+
+```{r tab_methyl_3402}
+#| label: tbl-3402-methylation
+#| tbl-cap: Methylation stats for position of interest 3402.
+tar_read(biscov) |>
+  filter(end == 3402) |> 
+  mutate(perc_meth = signif(perc_meth, 4)) |> 
+  select(Sample = sample, `Percent methylated` = perc_meth, `N methylated` = n_meth, `N unmethylated` = n_unmeth) |> 
+  gt()
+```
+
+
+## Conclusion
+
+Locus 3402 is highly methylated in all conditions.
+
+
+:::
+

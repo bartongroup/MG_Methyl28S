@@ -1,0 +1,10 @@
+{
+    "__default__":
+    {
+        "jc": "short",
+        "mem_free": "16G",
+        "threads": "1",
+        "local_free": "1G",
+        "ramdisk": "0G"
+    }
+}

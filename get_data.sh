@@ -1,0 +1,2 @@
+# rsync  -avm --include='*/' --include-from=rsync_include.txt --exclude='*' cluster:/cluster/gjb_lab/mgierlinski/projects/methyl28s/pilot .
+rsync  -avm --include='*/' --include-from=rsync_include.txt --exclude='*' /Volumes/mgierlinski/projects/methyl28s/pilot .

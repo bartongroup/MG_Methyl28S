@@ -1,0 +1,7 @@
+raw_sample	treatment	group	replicate
+DL126	control	CTR	1
+DL129	control	CTR	2
+DL127	disease	DIS	1
+DL130	disease	DIS	2
+DL128	suppressor	SUP	1
+DL131	suppressor	SUP	2

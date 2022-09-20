@@ -1,0 +1,228 @@
+# mamba install -c bioconda snakemake fastqc multiqc samtools deeptools bowtie2 trim-galore fastq-screen drmaa bismark
+
+
+import os
+configfile: 'config/config.yaml'
+
+# Fastq Screen config file
+
+fscreen_config = config['fastq_screen_config']
+
+
+GENOME_NAMES = ['28S', 'merged']
+
+
+# Read samples from a file
+
+with open(config['samples']) as f:
+    SAMPLES = f.read().splitlines()
+
+PAIRS = ['R1', 'R2']
+
+
+# Lists for rule all
+
+QCS = expand('qc/{sample}_{pair}_fastqc.html', sample = SAMPLES, pair = PAIRS)
+FSCREENS = expand('fscreen/{sample}_{pair}_screen.txt', sample = SAMPLES, pair = PAIRS)
+MULTIQC = ['multiqc/report.html']
+
+GENOMES = expand('genome/{genome}.fa', genome = GENOME_NAMES)
+BAMS = expand("{genome}/bismark/{sample}.bam", genome = GENOME_NAMES, sample = SAMPLES)
+BAIS = expand("{genome}/bam/{sample}.bam.bai", genome = GENOME_NAMES, sample = SAMPLES)
+BAMSTATS = expand('{genome}/bam/{sample}.stats', genome = GENOME_NAMES, sample = SAMPLES)
+BISMARK_COVS = expand('{genome}/bismark/{sample}.bismark.cov.gz', sample = SAMPLES, genome = GENOME_NAMES)
+BEDGRAPHS = expand('{genome}/bedgraph/{sample}.bedgraph', sample = SAMPLES, genome = GENOME_NAMES)
+
+
+####################################################################
+
+rule all:
+    input: QCS + MULTIQC + BISMARK_COVS + BEDGRAPHS + BAMSTATS
+
+
+####################################################################
+# Trim adapter sequences. As input files do not follow {sample}-{pair} naming convention,
+# we cannot use {pair} wildcards here.
+
+rule trim_adapters:
+    input:
+        R1 = 'fastq/{sample}_R1_001.fastq.gz',
+        R2 = 'fastq/{sample}_R2_001.fastq.gz'
+    output:
+        R1 = 'fastq_trimmed/{sample}_R1.fastq.gz',
+        R2 = 'fastq_trimmed/{sample}_R2.fastq.gz',
+        trim1 = 'fastq_trimmed/{sample}_R1_trimming_report.txt',
+        trim2 = 'fastq_trimmed/{sample}_R2_trimming_report.txt'
+    threads: 4
+    shell:
+        '''
+        mkdir -p fastq_trimmed
+        trim_galore --cores {threads} --paired --output_dir $TMPDIR/fastq_trimmed {input.R1} {input.R2}
+        mv $TMPDIR/fastq_trimmed/{wildcards.sample}_R1_001_val_1.fq.gz {output.R1}
+        mv $TMPDIR/fastq_trimmed/{wildcards.sample}_R2_001_val_2.fq.gz {output.R2}
+        mv $TMPDIR/fastq_trimmed/{wildcards.sample}_R1_001.fastq.gz_trimming_report.txt {output.trim1}
+        mv $TMPDIR/fastq_trimmed/{wildcards.sample}_R2_001.fastq.gz_trimming_report.txt {output.trim2}
+        '''
+        
+####################################################################
+# Quality control
+
+rule fastqc:
+    input: 'fastq_trimmed/{prefix}.fastq.gz'
+    output:
+        html = 'qc/{prefix}_fastqc.html',
+        zip = 'qc/{prefix}_fastqc.zip'
+    threads: 2
+    shell:
+        'fastqc -o qc --threads {threads} -f fastq {input}'
+
+####################################################################
+# Fastq Screen
+#   genomes must be installed manually: fastq_screen --get_genomes
+#   and config file prepared
+
+rule fastq_screen:
+    input: 'fastq_trimmed/{prefix}.fastq.gz'
+    output:
+        html = 'fscreen/{prefix}_screen.html',
+        txt = 'fscreen/{prefix}_screen.txt'
+    threads: 12
+    shell:
+        '''
+        fastq_screen --conf {fscreen_config} --outdir $TMPDIR/fscreen --threads {threads} {input}
+        mv $TMPDIR/fscreen/{wildcards.prefix}_screen.html {output.html}
+        mv $TMPDIR/fscreen/{wildcards.prefix}_screen.txt {output.txt}
+        '''
+
+
+####################################################################
+# Final multiqc from fastqc and fast_screen
+
+rule multiqc:
+    input:
+        fscreen = FSCREENS,
+        qc = QCS,
+        trimmed = expand('fastq_trimmed/{sample}_{pair}_trimming_report.txt', sample = SAMPLES, pair = PAIRS)
+    output: 'multiqc/report.html'
+    shell:
+        'multiqc -f --filename report --outdir multiqc fastq_trimmed qc fscreen'
+
+
+####################################################################
+# Bismark
+
+rule index_bismark:
+    input: "genome/{genome}.fa"
+    output: "{genome}/bismark_index/Bisulfite_Genome/CT_conversion/genome_mfa.CT_conversion.fa"
+    params:
+        genome = "{genome}",
+        index_path = "{genome}/bismark_index"
+    shell:
+        """
+        mkdir -p {params.genome}
+        mkdir -p {params.index_path}
+        cp {input} {params.index_path}
+        bismark_genome_preparation {params.index_path}
+        """
+
+rule bismark:
+    input:
+        index_file = "{genome}/bismark_index/Bisulfite_Genome/CT_conversion/genome_mfa.CT_conversion.fa",
+        R1 = "fastq_trimmed/{sample}_R1.fastq.gz",
+        R2 = "fastq_trimmed/{sample}_R2.fastq.gz"
+    output:
+        bam = "{genome}/bismark/{sample}.bam",
+        report = "{genome}/bismark/{sample}_report.txt"
+    params:
+        path = "{genome}/bismark",
+        index_path = "{genome}/bismark_index"
+    threads: 8
+    shell:
+        """
+        echo "host:" $HOSTNAME
+        echo "tmpdir:" $TMPDIR
+        mkdir -p {params.path}
+        bismark \
+            --genome {params.index_path} \
+            --temp_dir $TMPDIR/bismark_tmp_{wildcards.sample} \
+            --multicore {threads} \
+            --output_dir $TMPDIR/bismark \
+            -1 {input.R1} \
+            -2 {input.R2}
+        mv $TMPDIR/bismark/{wildcards.sample}_R1_bismark_bt2_pe.bam {output.bam}
+        mv $TMPDIR/bismark/{wildcards.sample}_R1_bismark_bt2_PE_report.txt {output.report}
+        """
+
+rule bismark_extractor:
+    input: "{genome}/bismark/{sample}.bam"
+    output: "{genome}/bismark/{sample}.bismark.cov.gz"
+    params:
+        path = "{genome}/bismark"
+    threads: 8
+    shell:
+        "bismark_methylation_extractor --gzip --bedgraph --multicore {threads} --output {params.path} {input}"
+
+
+####################################################################
+# Bowtie
+# Using CT conversion created by Bismark
+
+rule index_bowtie:
+    input: "{genome}/bismark_index/Bisulfite_Genome/CT_conversion/genome_mfa.CT_conversion.fa"
+    output: "bowtie_index/{genome}.1.bt2"
+    params:
+        bowtie_index = "bowtie_index/{genome}"
+    threads: 12
+    shell:
+        "bowtie2-build --threads {threads} {input} {params.bowtie_index}"
+
+rule bowtie:
+    input:
+        index_file = "bowtie_index/{genome}.1.bt2",
+        R1 = "fastq_trimmed/{sample}_R1.fastq.gz",
+        R2 = "fastq_trimmed/{sample}_R2.fastq.gz"
+    output: "{genome}/bam/{sample}.bam"
+    params:
+        bowtie_index = "bowtie_index/{genome}"
+    threads: 8
+    shell:
+        """
+        bowtie2 --threads {threads} -x {params.bowtie_index} -1 {input.R1} -2 {input.R2} \
+        | samtools sort - -O bam -o {output} -T $TMPDIR/samtools_sort{wildcards.sample} -@ {threads}
+        """
+
+
+####################################################################
+# Sort and index BAM files
+
+rule index_bam:
+    input: "{genome}/bam/{sample}.bam"
+    output:
+        bai = "{genome}/bam/{sample}.bam.bai"
+    shell:
+        "samtools index {input}"
+
+####################################################################
+# BAM stats
+
+rule bam_stats:
+    input: '{genome}/bam/{sample}.bam'
+    output: '{genome}/bam/{sample}.stats'
+    shell:
+        'bamtools stats -in {input} > {output}'
+
+
+
+####################################################################
+# Create bedgraph files.
+
+
+rule bedgraph:
+    input:
+        bam = "{genome}/bam/{sample}.bam",
+        bai = "{genome}/bam/{sample}.bam.bai"
+    output: "{genome}/bedgraph/{sample}.bedgraph"
+    threads: 12
+    shell:
+        "bamCoverage --outFileFormat bedgraph --binSize 1 --numberOfProcessors {threads} -b {input.bam} -o {output}"
+
