@@ -64,7 +64,7 @@ tar_read(metadata) |>
 
 # Full genome
 
-Reads were mapped to the *Drosophila melanogaster* genome BDGP6.32 (release 107), downloaded from Ensembl. The provided 28S sequence was added as a separate 'chromosome' (here labelled as `pdb|3J3E|5`). All `C` nucleotides were converted to `T` before mapping, to account for bisulphite convertion in data. *Bowtie2* 2.4.5 was used for mapping with default parameters.
+Ribosomal sequences can be repeated in the genome, which might pose mapping problems when a read matches two or more loci. To asses multimapping reads were mapped to the *Drosophila melanogaster* genome BDGP6.32 (release 107), downloaded from Ensembl. The provided 28S sequence was added as a separate 'chromosome' (here labelled as `pdb|3J3E|5`). All `C` nucleotides were converted to `T` before mapping, to account for bisulfite conversion in data. *Bowtie2* 2.4.5 was used for mapping with default parameters.
 
 ## Mapping statistics
 
@@ -79,7 +79,7 @@ tar_read(tab_bamstats) |>
 
 ## Mapped regions found
 
-A few regions with at least reads at any position were found. They are shown in @fig-regions for sample `CTR_1`.
+Five regions (plus `pdb|3J3E|5`) with depth of at least 30 at any position were found. They are shown in @fig-regions for sample `CTR_1`.
 
 ```{r fig_regions}
 #| label: fig-regions
@@ -89,7 +89,7 @@ A few regions with at least reads at any position were found. They are shown in 
 tar_read(fig_peaks)
 ```
 
-All these regions contain the same sequence.
+All these regions contain the same sequence. The rRNA chromosome contains two identical regions of 28S.
 
 # 28S
 
@@ -97,7 +97,7 @@ Here, reads where mapped to 28S sequence `pdb|3J3E|5`. Mapping of sample `CTR_1`
 
 ```{r map_28S}
 #| label: fig-28S-mapping
-#| fig-cap: Coverage of 28S. The sequence of the region between the primers is shown. Depth drops sharply outside primer regions.
+#| fig-cap: Coverage of 28S for CTR_1. The sequence of the region between the primers is shown. Depth drops sharply outside primer regions.
 #| column: page
 #| fig-width: 11 
 tar_read(fig_seq_28S) 
@@ -105,7 +105,11 @@ tar_read(fig_seq_28S)
 
 ## Methylation
 
-*Bismark* 0.23.1 was used to detect methylation sites. There are several sites in CpG context in 28S, though non of them is methylated except the site of interest, 3402, which is highly methylated in all samples. @fig-28S-methylation illustrates methylation for all sites detecte, @tbl-3402-methylation shows methylation statistics for locus 3402.
+```{r methyl_28S}
+tar_load(meth_sites)
+```
+
+*Bismark* 0.23.1 was used to detect methylation sites. `r nrow(meth_sites)` sites were found in CpG context in `pdb|3J3E|5` sequence, though none of them is methylated except for the locus of interest, 3402, which is highly methylated in all samples. @fig-28S-methylation illustrates methylation for all sites detected, @tbl-3402-methylation shows methylation statistics for locus 3402.
 
 
 ```{r fig_methyl}
@@ -138,7 +142,7 @@ Locus 3402 is highly methylated in all conditions.
 
  - [Source code for this project](https://github.com/bartongroup/MG_Methyl28S)
 
-## Session info
+# Session info
 
 ```{r session_info}
 tar_read(session_info)

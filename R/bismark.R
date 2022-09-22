@@ -25,3 +25,13 @@ plot_coverage <- function(bc, min_count = 10, ncol = 2) {
     scale_y_continuous(expand = expansion(mult = c(0, 0.03))) +
     labs("Position in 28S sequence", y = "Count", fill = "Methylation")
 }
+
+
+methylation_sites <- function(bc, min_count = 1000) {
+  bc |>
+    group_by(end) |>
+    summarise(n = sum(n_meth + n_unmeth)) |>
+    filter(n > 1000) |> 
+    rename(pos = end) |> 
+    arrange(pos)
+}
