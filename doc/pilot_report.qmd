@@ -5,7 +5,7 @@ author:
      affiliations: Data Analysis Group
      note: "Creator of this report"
    - name: Leeanne McGurk
-     affiliations: Medical Sciences Institute
+     affiliations: Cell and Developmental Biology
      note: "Collaborator"
 date: today
 date-format: "D MMMM YYYY"
@@ -89,7 +89,7 @@ Five regions (plus `pdb|3J3E|5`) with depth of at least 30 at any position were 
 tar_read(fig_peaks)
 ```
 
-All these regions contain the same sequence. The rRNA chromosome contains two identical regions of 28S.
+All these regions contain the same sequence. The rDNA chromosome contains two identical copies of 28S.
 
 # 28S
 
@@ -114,7 +114,7 @@ tar_load(meth_sites)
 
 ```{r fig_methyl}
 #| label: fig-28S-methylation
-#| fig-cap: Methylation sites in 28S. The colous show counts of reads with and without methylation.
+#| fig-cap: Methylation sites in 28S. The colours show counts of reads with and without methylation.
 #| fig-width: 7
 #| fig-height: 12
 tar_read(fig_cov_28S)
