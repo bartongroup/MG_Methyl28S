@@ -84,8 +84,8 @@ A few regions with at least reads at any position were found. They are shown in 
 ```{r fig_regions}
 #| label: fig-regions
 #| fig-cap: Regions with mapped reads in the full genome.
-#| fig-width: 10
-#| fig-height: 12
+#| fig-width: 8
+#| fig-height: 10
 tar_read(fig_peaks)
 ```
 
@@ -98,8 +98,8 @@ Here, reads where mapped to 28S sequence `pdb|3J3E|5`. Mapping of sample `CTR_1`
 ```{r map_28S}
 #| label: fig-28S-mapping
 #| fig-cap: Coverage of 28S. The sequence of the region between the primers is shown. Depth drops sharply outside primer regions.
-#| fig-column: page-right
-#| fig-width: 15
+#| column: page
+#| fig-width: 11 
 tar_read(fig_seq_28S) 
 ```
 
@@ -111,8 +111,8 @@ tar_read(fig_seq_28S)
 ```{r fig_methyl}
 #| label: fig-28S-methylation
 #| fig-cap: Methylation sites in 28S. The colous show counts of reads with and without methylation.
-#| fig-width: 10
-#| fig-height: 20
+#| fig-width: 7
+#| fig-height: 12
 tar_read(fig_cov_28S)
 ```
 
