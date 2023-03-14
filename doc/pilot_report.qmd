@@ -17,6 +17,7 @@ format:
   html:
     toc: true
 editor: visual
+self-contained: true
 ---
 
 ```{r setup, include=FALSE}
